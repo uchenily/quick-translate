@@ -59,23 +59,16 @@ sdcv --list-dicts   # 验证
 ## 配置 DeepSeek API
 
 1. 打开 https://platform.deepseek.com/ 注册并创建 API Key
-2. 在 shell 配置文件（如 `~/.bashrc`）中添加：
+
+2. 在linux-quick-translate.sh同级目录下， 创建一个env.sh文件（可以从env.sh.template复制) 注意修改DEEPSEEK_API_KEY为你的api key, 模型按自己需求可以选择 `deepseek-v4-flash` 或者 `deepseek-v4-pro`
 
 ```bash
-export DEEPSEEK_API_KEY="你的密钥"
+# 替换为实际的api key
+export DEEPSEEK_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export DEEPSEEK_MODEL="deepseek-v4-flash"
 ```
 
-3. 重新加载环境变量（或重开终端）：
-
-```bash
-source ~/.bashrc
-```
-
-## 设置脚本
-
-```bash
-chmod +x /path/to/linux-quick-translate.sh
-```
+## 设置快捷键
 
 打开 **GNOME 设置 → 键盘 → 键盘快捷键 → 自定义快捷键**，添加：
 
@@ -96,3 +89,4 @@ chmod +x /path/to/linux-quick-translate.sh
 - 翻译窗口按文字长度自适应：≤100 字符（600×400）、101-500（800×500）、>500（1000×600）
 - 未复制内容时按快捷键提示请先复制
 - 未安装 zenity 自动回退 `notify-send` 通知
+- 可以通过AI实现中英互译

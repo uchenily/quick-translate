@@ -3,13 +3,13 @@
 选中文本 → 复制（`Ctrl+C`）→ 按 `Super+C` 弹出结果。
 
 - **单个英文单词**：本地 `sdcv` 词典查询
-- **句子/段落**：百度翻译 API 在线翻译
+- **句子/段落**：DeepSeek API 在线翻译
 
 > **注意**
 >
 > - 本文是在 debian testing(debian forky) + gnome49 with Wayland 上做的测试，但本 flow 可适用几乎所有 Linux 发行版以及不同 DE（桌面环境），如果你用的不同发行版或不同桌面环境，遇到问题请自行变通
 > - 快捷键绑定可以是任何你喜欢的，不一定非要'Super+C'
-> - 百度翻译个人使用完全足够，完成个人认证之后每月有免费额度100万字符，QPS 10次/秒，超出免费额度费用是49元/百万字符。我们使用的是`通用文本翻译API`
+> - 在线翻译使用 DeepSeek `chat/completions`，模型为 `deepseek-v4-flash`
 
 ## 运行截图
 
@@ -56,15 +56,19 @@ unzip ecdict-stardict-28.zip -d ~/.stardict/dic/
 sdcv --list-dicts   # 验证
 ```
 
-## 注册百度翻译 API
+## 配置 DeepSeek API
 
-1. 打开 https://fanyi-api.baidu.com/ 注册并登录
-2. 进入控制台 → 开发者中心，获取 **APP ID** 和 **密钥**
-3. 打开脚本 `linux-quick-translate.sh`，在顶部配置区填入：
+1. 打开 https://platform.deepseek.com/ 注册并创建 API Key
+2. 在 shell 配置文件（如 `~/.bashrc`）中添加：
 
 ```bash
-APPID="你的APPID"
-SECRET="你的密钥"
+export DEEPSEEK_API_KEY="你的密钥"
+```
+
+3. 重新加载环境变量（或重开终端）：
+
+```bash
+source ~/.bashrc
 ```
 
 ## 设置脚本
@@ -88,7 +92,7 @@ chmod +x /path/to/linux-quick-translate.sh
 ## 说明
 
 - 单个英文单词走 `sdcv` 本地查词，无需网络
-- 两个以上单词或句子走百度翻译 API，需要网络
+- 两个以上单词或句子走 DeepSeek API，需要网络
 - 翻译窗口按文字长度自适应：≤100 字符（600×400）、101-500（800×500）、>500（1000×600）
 - 未复制内容时按快捷键提示请先复制
 - 未安装 zenity 自动回退 `notify-send` 通知

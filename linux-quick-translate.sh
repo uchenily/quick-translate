@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# ===== 百度翻译 API 配置（请填写你的信息）=====
-APPID="你的APPID"
-SECRET="你的密钥"
-FROM_LANG="en"
-TO_LANG="zh"
-# =============================================
+# ===== DeepSeek API 配置 =====
+source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
+# =============================
 
 # Check if clipboard contains plain text (not files, images, etc.)
 check_clipboard_is_text() {
@@ -98,19 +95,31 @@ show_translation() {
     fi
 }
 
-call_baidu_api() {
-    local text="$1" salt sign response
+call_deepseek_api() {
+    local text="$1" payload response
 
-    salt=$(date +%s)
-    sign=$(printf '%s' "${APPID}${text}${salt}${SECRET}" | md5sum | cut -d ' ' -f1)
+    payload=$(python3 -c '
+import json, sys
+text = sys.argv[1]
+model = sys.argv[2]
+payload = {
+    "model": model,
+    "messages": [
+        {
+            "role": "system",
+            "content": "你是专业翻译引擎。自动识别用户输入语言：如果是中文，翻译成英文；如果是英文，翻译成简体中文。只输出译文本身，不要解释、不要加引号、不要添加额外内容。保留原文中的换行、列表、代码块和专有名词格式。"
+        },
+        {"role": "user", "content": text}
+    ],
+    "stream": False
+}
+print(json.dumps(payload, ensure_ascii=False))
+' "$text" "$DEEPSEEK_MODEL")
 
-    response=$(curl -s -G "https://api.fanyi.baidu.com/api/trans/vip/translate" \
-        --data-urlencode "q=${text}" \
-        --data-urlencode "from=${FROM_LANG}" \
-        --data-urlencode "to=${TO_LANG}" \
-        --data-urlencode "appid=${APPID}" \
-        --data-urlencode "salt=${salt}" \
-        --data-urlencode "sign=${sign}")
+    response=$(curl -s "https://api.deepseek.com/chat/completions" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer ${DEEPSEEK_API_KEY}" \
+        -d "$payload")
 
     echo "$response"
 }
@@ -120,11 +129,20 @@ parse_translation() {
     echo "$json" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
-if 'error_code' in data:
-    print('ERROR:' + data.get('error_msg', '未知错误'))
+if 'error' in data:
+    err = data.get('error', {})
+    print('ERROR:' + err.get('message', '未知错误'))
     sys.exit(1)
-for r in data.get('trans_result', []):
-    print(r['dst'])
+choices = data.get('choices', [])
+if not choices:
+    print('ERROR:未返回翻译结果')
+    sys.exit(1)
+msg = choices[0].get('message', {})
+content = msg.get('content', '')
+if not content:
+    print('ERROR:翻译内容为空')
+    sys.exit(1)
+print(content.strip())
 "
 }
 
@@ -155,13 +173,13 @@ if echo "$NO_SPACE" | grep -qE '^[a-zA-Z]+$'; then
     exit $?
 fi
 
-# 多词/句子 → 百度翻译
-if [[ -z "$APPID" || -z "$SECRET" ]]; then
-    notify-send -t 5000 "翻译" "请先在脚本中配置百度翻译 APPID 和 SECRET"
+# 多词/句子 → DeepSeek 翻译
+if [[ -z "$DEEPSEEK_API_KEY" ]]; then
+    notify-send -t 5000 "翻译" "请先在脚本中配置 DeepSeek API Key"
     exit 1
 fi
 
-RESPONSE=$(call_baidu_api "$RAW")
+RESPONSE=$(call_deepseek_api "$RAW")
 TRANSLATION=$(parse_translation "$RESPONSE")
 
 if [[ "$TRANSLATION" == ERROR:* ]]; then

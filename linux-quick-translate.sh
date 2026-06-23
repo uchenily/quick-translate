@@ -111,6 +111,7 @@ payload = {
         },
         {"role": "user", "content": text}
     ],
+    "thinking": {"type": "disabled"},
     "stream": False
 }
 print(json.dumps(payload, ensure_ascii=False))
